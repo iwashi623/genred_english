@@ -28,7 +28,7 @@ sudo cp deployment/genred_english.service /etc/systemd/system/
 
 # Nginx設定をコピー
 echo "Installing Nginx configuration..."
-sudo cp deployment/nginx.conf /etc/nginx/sites-available/genred_english
+sudo cp nginx/prod/nginx.conf /etc/nginx/sites-available/genred_english
 sudo ln -sf /etc/nginx/sites-available/genred_english /etc/nginx/sites-enabled/genred_english
 
 # デフォルトのNginx設定を無効化（必要に応じて）
