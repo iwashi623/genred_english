@@ -21,7 +21,7 @@ WORKDIR /app
 
 # pyproject.tomlとuv.lockをコピー（依存関係のキャッシュ用）
 COPY pyproject.toml README.md ./
-COPY uv.lock* ./
+COPY uv.lock ./
 
 # 依存関係のインストール
 RUN uv sync
