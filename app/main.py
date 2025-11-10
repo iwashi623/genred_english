@@ -1,6 +1,7 @@
 import boto3
 import uuid
 from fastapi import FastAPI, Depends, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -16,6 +17,13 @@ class Settings(BaseSettings):
 
 settings = Settings()
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
