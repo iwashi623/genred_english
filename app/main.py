@@ -1,9 +1,20 @@
-from fastapi import FastAPI, Depends
+import boto3
+import uuid
+from fastapi import FastAPI, Depends, File, UploadFile
+from pydantic_settings import BaseSettings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from typing import Annotated
 from .database import get_db
 from .models import Problem
 
+
+class Settings(BaseSettings):
+    try_sound_bucket: str
+    region_name: str
+
+
+settings = Settings()
 app = FastAPI()
 
 
@@ -33,3 +44,24 @@ async def get_problems(db: AsyncSession = Depends(get_db)):
             for problem in problems
         ]
     }
+
+
+@app.post("/upload")
+async def upload_try_sound(
+    file: Annotated[UploadFile, File()],
+    problem_id: str,
+    user_id: str
+):
+    file_content = await file.read()
+    file_id = uuid.uuid1()
+    s3 = boto3.client("s3", region_name=settings.region_name)
+
+    try:
+        _ = s3.put_object(
+            Body=file_content,
+            Bucket=settings.try_sound_bucket,
+            Key=f"problems/{problem_id}/users/{user_id}/{file_id}.mp3"
+        )
+        return "ok"
+    except Exception:
+        return "ng"
