@@ -1,7 +1,7 @@
 import boto3
 import os
 import uuid
-from fastapi import FastAPI, Depends, File, UploadFile
+from fastapi import FastAPI, Depends, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -73,6 +73,9 @@ async def upload_try_sound(
             Bucket=settings.try_sound_bucket,
             Key=f"problems/{problem_id}/users/{user_id}/{file_id}.mp3"
         )
-        return "ok"
-    except Exception:
-        return "ng"
+        return {"status": "ok", "file_id": str(file_id)}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to upload file to S3: {str(e)}"
+        )
