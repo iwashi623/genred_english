@@ -21,6 +21,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - DATABASE_URL=mysql+aiomysql://user:password@db:3306/genred_english
+      - TRY_SOUND_BUCKET=try-sound.3q-aws-g3.com
+      - REGION_NAME=ap-northeast-1
     networks:
       - app-network
     depends_on:
