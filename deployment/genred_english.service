@@ -21,6 +21,10 @@ ExecStart=/usr/bin/docker run --rm \
   --name genred_english \
   --network host \
   -e DATABASE_URL=${DATABASE_URL} \
+  -e TRY_SOUND_BUCKET=${TRY_SOUND_BUCKET} \
+  -e REGION_NAME=${REGION_NAME} \
+  -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+  -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
   -e PYTHONUNBUFFERED=1 \
   genred_english:latest
 
