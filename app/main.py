@@ -1,14 +1,14 @@
 import boto3
 import os
 import uuid
-from fastapi import FastAPI, Depends, File, UploadFile, HTTPException
+from fastapi import FastAPI, Depends, File, UploadFile, HTTPException, Path, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from .database import get_db
 from .models import Problem
-
+from .models import Result
 
 class Settings(BaseSettings):
     try_sound_bucket: str
@@ -56,6 +56,30 @@ async def get_problems(db: AsyncSession = Depends(get_db)):
         ]
     }
 
+@app.get("/problems/{problem_id}/result")
+async def get_latest_result(
+    problem_id: int = Path(...),
+    user_id: int = Query(...),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Result)
+        .where(Result.problem_id == problem_id, Result.user_id == user_id)
+        .order_by(Result.created_at.desc())
+        .limit(1)
+    )
+    result = result.scalars().first()
+    if not result:
+        raise HTTPException(status_code=404, detail="result not found")
+
+    return {
+        "id": result.id,
+        "user_id": result.user_id,
+        "problem_id": result.problem_id,
+        "score": float(result.score) if result.score is not None else None,
+        "try_file_path": result.try_file_path,
+        "created_at": result.created_at.isoformat() if result.created_at else None,
+    }
 
 @app.post("/upload")
 async def upload_try_sound(

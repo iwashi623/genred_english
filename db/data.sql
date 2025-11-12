@@ -45,3 +45,11 @@ INSERT INTO problems (genre_id, text, answer_file_path) VALUES
 (3, 'Summarize the main points of the article.', '/answers/problem_033.txt'),
 (4, 'Listen and answer the comprehension questions.', '/answers/problem_034.txt'),
 (5, 'Write a narrative about a memorable experience.', '/answers/problem_035.txt');
+
+-- ユーザーの挿入
+INSERT INTO users (name) VALUES
+('TEST');
+
+-- 結果の挿入
+INSERT INTO results (user_id, problem_id, answered_text, score, try_file_path) VALUES
+(1, 1, 'AAA', 100, '/test_path');
