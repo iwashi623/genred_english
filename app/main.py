@@ -9,6 +9,7 @@ from sqlalchemy import select
 from .database import get_db
 from .models import Problem
 from .models import Result
+from .models import Genre
 
 class Settings(BaseSettings):
     try_sound_bucket: str
@@ -79,6 +80,25 @@ async def get_latest_result(
         "score": float(result.score) if result.score is not None else None,
         "try_file_path": result.try_file_path,
         "created_at": result.created_at.isoformat() if result.created_at else None,
+    }
+
+@app.get("/genres")
+async def get_genres(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Genre)
+    )
+    genres = result.scalars().all()
+
+    return {
+        "genres": [
+            {
+                "id": genres.id,
+                "name": genres.name,
+                "display_name": genres.display_name,
+                "created_at": genres.created_at.isoformat() if genres.created_at else None,
+            }
+            for genres in genres
+        ]
     }
 
 @app.post("/upload")
