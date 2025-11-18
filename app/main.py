@@ -1,8 +1,9 @@
 import boto3
 import os
 import uuid
-from fastapi import FastAPI, Depends, File, UploadFile, HTTPException, Path, Query
+from fastapi import FastAPI, Depends, File, UploadFile, HTTPException, Path, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -20,6 +21,10 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 
+class LoginRequest(BaseModel):
+    username: str
+
+
 settings = Settings()
 app = FastAPI()
 app.add_middleware(
@@ -34,6 +39,53 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+@app.post("/login")
+async def login(
+    request: LoginRequest,
+    response: Response,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    ユーザー名でログイン処理を行う
+    - ユーザーが存在すればそのIDを使用
+    - 存在しなければ新規ユーザーを作成
+    - UserIDをクッキーにセットして返す
+    """
+    # ユーザー名の検証
+    if not request.username or not request.username.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Username cannot be empty"
+        )
+
+    # ユーザー名でDBを検索
+    result = await db.execute(
+        select(User).where(User.name == request.username)
+    )
+    user = result.scalars().first()
+
+    # ユーザーが存在しない場合は新規作成
+    if not user:
+        user = User(name=request.username)
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    # クッキーにUserIDをセット
+    response.set_cookie(
+        key="user_id",
+        value=str(user.id),
+        httponly=True,
+        samesite="lax"
+    )
+
+    return {
+        "user_id": user.id,
+        "username": user.name,
+        "message": "Login successful"
+    }
 
 
 @app.get("/problems")
