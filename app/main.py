@@ -10,6 +10,7 @@ from .database import get_db
 from .models import Problem
 from .models import Result
 from .models import Genre
+from .models import User
 
 class Settings(BaseSettings):
     try_sound_bucket: str
@@ -123,3 +124,23 @@ async def upload_try_sound(
             status_code=500,
             detail=f"Failed to upload file to S3: {str(e)}"
         )
+
+
+@app.get("/ranking")
+async def get_ranking(
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Result.score.label("score"), User.name.label("name"))
+        .order_by(Result.score.desc())
+        .join(User, Result.user_id == User.id)
+        .limit(10)
+    )
+    results = result.mappings().all()
+
+    return {
+        "ranking": [{
+            "name": result.name,
+            "score": float(result.score) if result.score is not None else None,
+        } for result in results]
+    }
