@@ -1,6 +1,7 @@
 import boto3
 import os
 import uuid
+from datetime import datetime, timedelta
 from fastapi import FastAPI, Depends, File, UploadFile, HTTPException, Path, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -182,8 +183,12 @@ async def upload_try_sound(
 async def get_ranking(
     db: AsyncSession = Depends(get_db),
 ):
+    # 直近1時間の時刻を計算
+    one_hour_ago = datetime.now() - timedelta(hours=1)
+
     result = await db.execute(
         select(Result.score.label("score"), User.name.label("name"))
+        .where(Result.created_at >= one_hour_ago)
         .order_by(Result.score.desc())
         .join(User, Result.user_id == User.id)
         .limit(10)
